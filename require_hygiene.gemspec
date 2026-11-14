@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.executables   = ['require_hygiene']
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'prism', '>= 1.0', '< 2'
+  spec.add_dependency 'prism', '>= 1.0', '< 3'
   spec.add_dependency 'thor', '~> 1.3'
   # `rubydex` (semantic backend, experimental) is added with the missing-require rule, see docs/specification.md
 end
