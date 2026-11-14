@@ -17,7 +17,7 @@ cd ruby-require-hygiene
 bundle install
 ```
 
-Ruby 3.2 or later. The command line from the sources: `bundle exec bin/require_hygiene analyze lib`.
+Ruby 3.2 or later. On Ruby 3.2 only the tests run: RuboCop (`rubocop-shopify`) requires Ruby 3.3 and is not installed. The command line from the sources: `bundle exec bin/require_hygiene analyze lib`.
 
 ## Layout
 

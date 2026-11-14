@@ -77,5 +77,5 @@ jobs:
       - name: Build, install and run
         run: |
           gem build require_hygiene.gemspec --output /tmp/require_hygiene.gem
-          gem install --local /tmp/require_hygiene.gem
+          gem install /tmp/require_hygiene.gem
           require_hygiene version

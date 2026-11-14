@@ -2,7 +2,6 @@
 
 require 'pathname'
 require 'prism'
-require 'set'
 require_relative 'errors'
 require_relative 'require_directive'
 

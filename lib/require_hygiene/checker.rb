@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'pathname'
-require 'set'
 require_relative 'diagnostic'
 require_relative 'runtime_snapshot'
 require_relative 'source_scanner'

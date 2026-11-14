@@ -12,9 +12,13 @@ Rake::TestTask.new(:test) do |t|
   t.warning = true
 end
 
-desc 'Lint with RuboCop'
-task :rubocop do
-  sh 'bundle', 'exec', 'rubocop'
+# RuboCop is not installed on Ruby 3.2, see the Gemfile
+RUBOCOP = Gem::Specification.find_all_by_name('rubocop-shopify').any?
+if RUBOCOP
+  desc 'Lint with RuboCop'
+  task :rubocop do
+    sh 'bundle', 'exec', 'rubocop'
+  end
 end
 
 # API documentation in doc/ (configuration in .yardopts)
@@ -27,4 +31,4 @@ namespace :yard do
   end
 end
 
-task default: %i[test rubocop]
+task default: RUBOCOP ? %i[test rubocop] : %i[test]

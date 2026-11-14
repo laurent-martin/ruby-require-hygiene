@@ -1,7 +1,14 @@
 # frozen_string_literal: true
 
 require_relative 'test_helper'
-require_relative '../examples/require_relative_first_cop'
+
+# RuboCop is a development dependency that is not installed on Ruby 3.2 (see the Gemfile): the test is skipped
+begin
+  require_relative '../examples/require_relative_first_cop'
+rescue LoadError
+  warn 'RuboCop is not installed: tests of examples/require_relative_first_cop.rb skipped'
+  return
+end
 
 # Cop of examples/require_relative_first_cop.rb
 class RequireRelativeFirstCopTest < Minitest::Test
