@@ -1,0 +1,15 @@
+/.bundle/
+/pkg/
+/tmp/
+/Gemfile.lock
+# Generated documentation, built by `rake doc:pdf`
+/docs/*.pdf
+# Temporary files of gfm2pdf-toolchain
+.tmp.*
+svg-inkscape/
+# Personal notes, not published
+/private/
+/coverage/
+/doc/
+/.yardoc/
+/.ruby-lsp/

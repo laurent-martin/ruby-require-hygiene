@@ -1,0 +1,15 @@
+# Example configuration of require_hygiene: copy it to `.require_hygiene.yml` at the root of the project.
+# Usage: require_hygiene analyze -c examples/require_hygiene.yml --baseline .require_hygiene_todo.yml
+paths:
+  include:
+    - lib/**/*.rb
+  # Generated code: not checked, but still provides constants to other files
+  exclude:
+    - lib/my_gem_pb.rb
+  load_paths:
+    - lib
+allow:
+  extra_provides:
+    # `using Colors` needs the gem, loaded by this file
+    my_gem/colors:
+      - Colors

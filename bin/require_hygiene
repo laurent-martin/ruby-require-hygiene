@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Executable of the gem: all the logic is in RequireHygiene::CLI
+require_relative '../lib/require_hygiene/cli'
+
+RequireHygiene::CLI.start(ARGV)

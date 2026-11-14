@@ -1,0 +1,10 @@
+--markup markdown
+--output-dir doc
+--readme README.md
+--title "require_hygiene"
+--no-private
+lib/**/*.rb
+-
+CHANGELOG.md
+docs/manual.md
+docs/specification.md

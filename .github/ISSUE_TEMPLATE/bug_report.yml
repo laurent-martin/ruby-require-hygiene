@@ -1,0 +1,32 @@
+name: Bug report
+description: A wrong, missing or misleading finding, a crash, or a wrong exit status
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal Ruby file and command
+      description: The smallest file(s) that reproduce the problem, and the command line.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version of require_hygiene
+      placeholder: "require_hygiene version"
+    validations:
+      required: true
+  - type: input
+    id: ruby
+    attributes:
+      label: Ruby version and operating system
+      placeholder: "ruby -v"
+    validations:
+      required: true

@@ -1,0 +1,35 @@
+# Push the gem to rubygems.org when a tag v* is created (by rake release:run).
+# Uses RubyGems "trusted publishing" (OpenID Connect): no API key, and no one-time password (the gem requires MFA).
+# One-time setup on rubygems.org: gem > Trusted publishers > GitHub Actions, repository laurent-martin/ruby-require-hygiene,
+# workflow deploy.yml, environment rubygems. For the very first release, create a "pending" trusted publisher.
+name: Push to Rubygems
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy:
+    name: Build + Publish
+    runs-on: ubuntu-latest
+    environment: rubygems
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          bundler-cache: true
+
+      - name: Check that the tag is the version of the gem
+        run: |
+          version="$(ruby -r ./lib/require_hygiene/version -e 'print RequireHygiene::VERSION')"
+          test "v${version}" = "${GITHUB_REF_NAME}" || { echo "Tag ${GITHUB_REF_NAME} is not version ${version}"; exit 1; }
+
+      - name: Publish to RubyGems
+        uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1

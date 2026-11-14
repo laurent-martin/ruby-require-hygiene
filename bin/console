@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Interactive console with the library loaded
+require 'bundler/setup'
+require 'irb'
+require_relative '../lib/require_hygiene'
+
+IRB.start(__FILE__)
