@@ -15,6 +15,6 @@ group :development do
     gem 'rubocop-performance', '~> 1.10'
     gem 'rubocop-shopify', '~> 3.1'
   end
-  gem 'simplecov', '~> 0.22', require: false
+  gem 'simplecov', '~> 1.3', require: false
   gem 'yard', '~> 0.9'
 end
