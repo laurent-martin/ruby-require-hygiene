@@ -82,9 +82,18 @@ the command line tool.
      aggregate entry point) provides what the files it requires provide,
      recursively;
    - another library provides the constants that appear when it is loaded
-     in a new Ruby process (`RuntimeSnapshot`). A library does not own the
-     constants of the libraries it loads itself (`uri` loads `ipaddr`, but
-     `IPAddr` is not provided by `uri`).
+     in a new Ruby process (`RuntimeSnapshot`). The libraries loaded are the
+     ones the checked files require, plus a fixed list of standard libraries
+     (default and bundled gems): a constant of the standard library (`Date`) is
+     then resolved even when no file requires its library.
+     A library does not own the constants of the libraries it loads itself
+     (`uri` loads `ipaddr`, but `IPAddr` is not provided by `uri`): `require`
+     is traced in that process, and a constant that appeared while another
+     known library, or one of its files (`digest/sha2`), was being required is
+     not owned. Relying on it is relying on a sub-dependency, that can change
+     with the version (`psych` loads `date` since psych 5.2, not before).
+     Exception: a library that is the documented entry point of another one
+     provides its constants (`yaml` provides `Psych`).
 3. **Resolve** each reference through the lexical nesting, as Ruby does, to a
    provider: project file, library, or Ruby core.
 4. **Report** (`Checker`):
@@ -227,9 +236,10 @@ relevant signals:
     discussion identified real-world cases involving constants supplied
     through included modules and constants guarded by `const_defined?`.
     These cases illustrate how difficult reliable constant resolution
-    can be. The referenced issue and pull-request history should be
-    checked against the current upstream repository before making public
-    claims.
+    can be. They were checked on 14 November 2026 (see the
+    [Research log](research_log.md)): both are **fixed upstream** in
+    version 0.3.0, so they no longer set this project apart. The
+    upstream cop still has no unused-require check.
 
 3.  **`degem`'s acknowledged limitations.** The discussion identified an
     issue proposing AST-based analysis instead of
@@ -254,7 +264,7 @@ status.
 
 | Project / technology | Potential role | Limitation or question to validate |
 | --- | --- | --- |
-| `rubocop-require_tools` | Existing RuboCop checks, especially missing-require detection; possible compatibility reference | Verify current maintenance, supported RuboCop/Ruby versions, and actual resolution behavior |
+| `rubocop-require_tools` | Existing RuboCop check for missing requires (one cop, `MissingRequireStatement`); compatibility reference | Maintained in 2026 and widely installed. Resolution behavior on the same files as this project is not yet compared |
 | Shopify `rubydex` | Candidate semantic index, dependency graph, constant resolution, and reference tracking | Experimental status and API suitability must be validated; do not couple the analyzer directly to undocumented internals |
 | Ruby `Prism` | Parser and AST for require directives, source locations, and syntax-level evidence | AST alone does not resolve runtime constant ownership |
 | `degem` | Bundle-level unused-gem analysis; useful comparison | Not a replacement for file-level require analysis |
@@ -1321,7 +1331,8 @@ The two modes should not be conflated.
 
 The runtime snapshot loads each required library in a new Ruby process. This
 is accurate, but it executes the code of that library. It is acceptable for
-the libraries that the analyzed project already requires and runs, and it
+the libraries that the analyzed project already requires and runs, and for the
+libraries of Ruby itself (the fixed list of standard libraries), and it
 must stay documented, visible in the report, and replaceable by static
 metadata. It never runs the analyzed project itself.
 
@@ -1394,8 +1405,8 @@ before relying on them:
     tools.
 -   Ruby community discussion from 2005 concerning detection of extra
     `require` statements.
--   Reported `rubocop-require_tools` issues/PRs concerning
-    included-module constants and `const_defined?`.
+-   `rubocop-require_tools` pull requests 7 and 8 (included-module
+    constants and `const_defined?`), checked in the research log.
 -   `degem` issue proposing AST-based analysis instead of regular
     expressions.
 

@@ -28,7 +28,25 @@ module RequireHygiene
       'yaml'       => /\.to_yaml\b/,
       'json'       => /\.(?:to_json|as_json)\b/,
       'tmpdir'     => /\bDir\.(?:mktmpdir|tmpdir)\b/,
-      'io/console' => /\.(?:noecho|winsize|raw|getch|echo=|console)\b|\bIO\.console\b/
+      'io/console' => /\.(?:noecho|winsize|raw|getch|echo=|console|getpass)\b|\bIO\.console\b/
+    }.freeze
+
+    # Libraries of Ruby (default and bundled gems) that are always loaded, in addition to the ones the checked files require:
+    # a constant of one of them (`Date`) is then reported as missing even when no file requires its library, and whatever
+    # other libraries happen to be loaded (`psych` loads `date` since psych 5.2, not before).
+    # A library that cannot be loaded (not installed with this Ruby) is ignored.
+    STANDARD_LIBRARIES = %w[
+      abbrev base64 benchmark bigdecimal cgi coverage csv date delegate digest English erb etc fcntl fiddle fileutils find
+      forwardable getoptlong io/console io/nonblock io/wait ipaddr json logger matrix monitor mutex_m net/ftp net/http net/imap
+      net/pop net/protocol net/smtp nkf objspace observer open-uri open3 openssl optparse ostruct pathname pp prettyprint prime
+      pstore psych racc rbconfig readline reline resolv rinda/rinda ripper securerandom set shellwords singleton socket stringio
+      strscan syslog tempfile time timeout tmpdir tsort uri weakref yaml zlib
+    ].freeze
+
+    # Libraries that are a documented entry point of another one, and so provide its constants: `require 'yaml'` provides `Psych`
+    FACADES = {
+      'yaml'      => %w[psych],
+      'net/https' => %w[net/http]
     }.freeze
 
     # @param load_paths     [Array<String>] Folders in the load path, where `require 'a/b'` is `a/b.rb`
@@ -98,18 +116,22 @@ module RequireHygiene
 
     def index_external
       names = @checked.flat_map { |path| @infos[path].requires.select { |r| r.static? && !r.relative? }.map(&:path) }.uniq.reject { |n| internal_name?(n) }
+      names = (names + STANDARD_LIBRARIES + FACADES.values.flatten).uniq.reject { |n| internal_name?(n) }
       # name => result, libraries that cannot be loaded (optional gems that are not installed) are ignored.
       # The constant `VERSION` is not a use of the library
-      loaded = RuntimeSnapshot.many(names).compact.transform_values do |result|
-        RuntimeSnapshot::Result.new(result.constants.reject { |c| c.end_with?('::VERSION') }.to_set, result.files)
-      end
+      loaded = RuntimeSnapshot.many(names).compact
       # A library does not own the constants of the libraries it loads itself: `uri` loads `ipaddr`, but `IPAddr` is not provided by `uri`.
-      # Using it through `uri` is depending on a sub-dependency.
+      # Using it through `uri` is depending on a sub-dependency, that can change with the version of the library (`psych` loads
+      # `date` since psych 5.2). A constant is owned by the library unless another known library, or one of its files
+      # (`digest/sha2` of `digest`), was being required when it appeared. Except for a facade, that provides the library it is
+      # the entry point of. The constant `VERSION` is not a use of the library.
       @external = loaded.to_h do |name, result|
-        loaded_by_it = loaded.reject { |other, _| other.eql?(name) }.select do |other, _|
-          result.files.any? { |file| file.match?(%r{/#{Regexp.escape(other)}\.(?:rb|so|bundle)\z}) }
+        others = loaded.keys.reject { |other| other.eql?(name) || FACADES.fetch(name, []).include?(other) }
+        foreign = ->(req) { others.any? { |other| req.eql?(other) || req.start_with?("#{other}/") } }
+        owned = result.constants.reject do |c|
+          c.end_with?('::VERSION') || result.owners.fetch(c, []).drop(1).any?(&foreign)
         end
-        [name, result.constants - loaded_by_it.values.flat_map { |other| other.constants.to_a }]
+        [name, owned.to_set]
       end
       @external_by_const = Hash.new { |h, k| h[k] = Set.new }
       @external.each { |name, consts| consts.each { |c| @external_by_const[c] << name } }
@@ -149,7 +171,11 @@ module RequireHygiene
       end
       # Files that are available through the requires of the file
       available = internal.keys.flat_map { |file| provided_files(file).to_a }.to_set
-      extra = info.requires.select(&:static?).flat_map { |r| @extra_provides.fetch(r.path, []).map { |c| [c, r.path] } }.to_h
+      extra = info.requires.select(&:static?).flat_map do |r|
+        canonical = (f = internal_file(info, r)) ? require_name(f) : r.path
+        constants = @extra_provides.fetch(canonical) { @extra_provides.fetch(r.path, []) }
+        constants.map { |c| [c, f || r.path] }
+      end.to_h
       used_internal = Set.new
       used_external = Set.new
       missing = {}
@@ -157,8 +183,7 @@ module RequireHygiene
         kind, name, providers = resolve(ref)
         if extra.key?(ref.text) || extra.key?(name)
           provider = extra.fetch(ref.text) { extra.fetch(name) }
-          used_external << provider
-          used_internal << internal_path(provider)
+          provider.is_a?(Pathname) ? used_internal << provider : used_external << provider
           next
         end
         case kind

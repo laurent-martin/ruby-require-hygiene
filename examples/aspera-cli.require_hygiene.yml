@@ -1,0 +1,12 @@
+paths:
+  include:
+    - lib/**/*.rb
+  exclude:
+    - lib/transferd_pb.rb
+    - lib/transferd_services_pb.rb
+  load_paths:
+    - lib
+allow:
+  extra_provides:
+    aspera/rainbow:
+      - Rainbow

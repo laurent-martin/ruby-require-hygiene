@@ -23,4 +23,9 @@ Released: [Place date of release here]
 - CI: least-privilege permissions, actions pinned by commit SHA, Dependabot, `bundler-audit`, macOS job, gem build and
   install check, SimpleCov coverage report, API documentation check.
 - Test coverage with SimpleCov (`coverage/`, minimum 80% of lines) and API documentation with YARD (`rake yard`, `rake yard:check`).
+- Standard libraries (default and bundled gems) always loaded: a constant such as `Date` is reported as missing even when
+  no checked file requires its library, whatever the libraries that happen to load it with this Ruby.
+- Ownership of the constants of a library from a trace of `require`: a constant that appeared while another known library
+  was being required is not owned (`Date` is not provided by `psych`, `Digest::SHA256` not by `pstore`); facades provide
+  the library they are the entry point of (`yaml` provides `Psych`, `net/https` provides `Net::HTTP`).
 - Gem metadata `source_code_uri` and `bug_tracker_uri`, upper bound `< 2` on `prism`. `bin/setup` and `bin/console`.

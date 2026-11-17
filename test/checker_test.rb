@@ -97,4 +97,16 @@ class CheckerTest < Minitest::Test
   def test_does_not_take_defined_as_a_use
     assert_empty(findings(BASE.merge('my/a.rb' => "module My\n  class A\n    def f = defined?(Error)\n  end\nend\n")))
   end
+
+  # No file requires `date`, and `yaml` loads it (psych 5.2 and later): still missing, whatever the version of psych
+  def test_reports_a_constant_of_the_standard_library_that_no_file_requires
+    code = "require 'yaml'\nmodule My\n  def self.load(s) = YAML.safe_load(s, permitted_classes: [Date])\nend\n"
+    result = findings('my/a.rb' => code)
+    assert_equal(["my/a.rb:missing_require:Date is used, but not provided by a require of this file: add require 'date'"], result)
+  end
+
+  def test_takes_the_constants_of_the_library_behind_a_facade_as_provided
+    code = "require 'yaml'\nmodule My\n  def self.f(s) = Psych.parse_stream(s).is_a?(Psych::Nodes::Stream)\nend\n"
+    assert_empty(findings('my/a.rb' => code))
+  end
 end

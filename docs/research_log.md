@@ -21,7 +21,7 @@ Source: `https://rubygems.org/api/v1/gems/<name>.json`.
 | `rubydex` | 0.4.4 | MIT | 2026-10-28 | Required Ruby `>= 3.2, < 4.1.dev`. Precompiled for arm64-darwin, x86_64-darwin, aarch64-linux, x86_64-linux, x64-mingw-ucrt. |
 | `prism` | 2.1.0 | MIT | 2026-10-28 | Installed on the development machine: 1.9.0. |
 | `thor` | 1.5.0 | MIT | 2026-01-06 | |
-| `rubocop-require_tools` | 0.3.0 | MIT | 2026-09-30 | Maintained recently, to be studied in detail. |
+| `rubocop-require_tools` | 0.3.0 | MIT | 2026-09-30 | Maintained again in 2026 (see the section below). About 1.35 million downloads. Only one cop: `MissingRequireStatement`. |
 | `degem` | 0.3.0 | MIT | 2024-12-20 | Bundle-level analysis. |
 | `debride` | 1.15.2 | MIT | 2026-04-20 | Dead code. |
 | `leftovers` | 0.12.2 | MIT | 2023-03-24 | Dead code. |
@@ -105,11 +105,29 @@ Not checked, so not stated in the documentation as verified: that `require 'ruby
 [Manual](manual.md) chapter "Best practices" lists `require_relative` for internal files, Zeitwerk and `$LOAD_PATH` as
 general advice, not as results of this log. The [Specification](specification.md) does not impose a loading style.
 
+## `rubocop-require_tools` history (14 November 2026)
+
+Source: `https://github.com/milch/rubocop-require_tools` and `https://api.github.com/repos/milch/rubocop-require_tools/issues`.
+Only the repository page, the issue and pull request descriptions, and the RubyGems API were read, not the code.
+
+| Claim | Result |
+| --- | --- |
+| The README lists more than one cop | **No**: "Currently it will only check whether there are possibly any missing requires". The gem has no unused-require check. |
+| Constants of included modules are resolved | **Yes**, since [PR 7](https://github.com/milch/rubocop-require_tools/pull/7), merged 2026-09-30. The description reports 70 offenses falling to none on fastlane `produce/lib/produce/service.rb`. |
+| Constants guarded by `defined?` or `const_defined?` are skipped | **Yes**, since [PR 8](https://github.com/milch/rubocop-require_tools/pull/8), merged 2026-09-30. A check on `Foo` does not cover `Foo::Bar`. |
+| Aliased constants (`Foo = Bar::Baz`) are resolved | **Yes**, since [PR 4](https://github.com/milch/rubocop-require_tools/pull/4) (issue 3), merged 2026-05-27. |
+| The cop uses the current RuboCop base class | **Yes**, since [PR 6](https://github.com/milch/rubocop-require_tools/pull/6), merged 2026-09-30. RuboCop 1.0 is the minimum. |
+| The project is maintained | Yes, in 2026: pull requests 4, 5, 6, 7 and 8 were merged between May and September 2026, most of them the day they were opened. Issue 3 (November 2025) describes the gem as having had about seven years with no work. This was not checked in the commit history. |
+
+Consequence: the limitations on included modules and `const_defined?`, which the Specification listed as leads, are
+fixed upstream. They no longer support the positioning of this project. What remains different is the unused-require
+rule, the explained JSON output, the isolation check and the baseline.
+
 ## Open research items
 
 | Item | Needed for |
 | --- | --- |
-| URL, issue and pull request numbers for the `rubocop-require_tools` limitations (included modules, `const_defined?`). | Positioning, Specification chapter "User need and existing ecosystem evidence". |
+| Behavior of `rubocop-require_tools` 0.3.0 and `require_hygiene` on the same files (fastlane, fixtures): false positives and false negatives of each. | Positioning, Specification chapter "User need and existing ecosystem evidence". |
 | URL of the 2005 Ruby community discussion. | Same. |
 | `degem` issue about AST-based analysis. | Same. |
 | Source of `lopper` and of the Ruby static analysis project named `rigor`. | Same. |
